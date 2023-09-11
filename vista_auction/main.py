@@ -34,7 +34,7 @@ def get_pagination():
 
 
 def parce_page(pag):
-    with open("result.csv", "w") as f:
+    with open("../result.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow([
             "Title",
@@ -83,7 +83,7 @@ def parce_page(pag):
                     #     "lot_url": lot_url
                     # })
 
-                    with open("result.csv", "a") as f:
+                    with open("../result.csv", "a") as f:
                         writer = csv.writer(f)
                         writer.writerow([lot_title, str(lot_msrp)+"$", str(lot_bid)+"$", lot_condition, lot_time, lot_img_url, lot_url])
 
