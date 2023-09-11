@@ -1,5 +1,4 @@
 import csv
-import json
 
 import requests
 from bs4 import BeautifulSoup
@@ -14,6 +13,7 @@ headers = {
     "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
 }
 
+# logging config
 logging.basicConfig(
     format = '%(threadName)s %(name)s %(levelname)s: %(message)s',
     level=logging.INFO)
@@ -34,6 +34,11 @@ def get_pagination():
 
 
 def parce_page(pag):
+    """
+    This is the main module for parsing. It gets a pagination parameter and saves the file result.csv
+    """
+
+    # create a csv table and add a columns headers
     with open("../result.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow([
@@ -46,6 +51,7 @@ def parce_page(pag):
             "url"
         ])
 
+    # parse each page for lots
     for i in range(0, pag+1):
         logging.info(f"working with page: {i}")
 
@@ -53,15 +59,19 @@ def parce_page(pag):
 
         res = requests.get(url, headers=headers)
         soup = BeautifulSoup(res.text, "lxml")
+
+        # get a main section contains all the data of lot
         lot_data = soup.find_all("section")
 
-        result = []
-
         count = 0
+
+        # parse each lot
         for item in lot_data:
             logging.info(f"working with item:{count}/{len(lot_data)}")
             try:
                 count += 1
+
+                # get all the elements that was requested
                 lot_img_url = item.find(class_="img-responsive")["src"]
                 lot_title = " ".join(item.find("h1").find_next("a").text.strip().strip().split())
                 lot_url = "https://vistaauction.com" + item.find("a")["href"]
@@ -69,30 +79,20 @@ def parce_page(pag):
                 lot_msrp = float(subtitle.split(" - ")[0].split("MSRP: $")[1])
                 lot_condition = subtitle.split(" - ")[1]
                 lot_bid = float(item.find("a", class_="InlineQuickBid").find_next("span").text)
+
+                #get lot time with get_lot_time func
                 lot_time = get_lot_time(lot_url)
 
                 # requested conditions
                 if lot_msrp > 25 and lot_bid < 25:
-                    # result.append({
-                    #     "lot_image": lot_img_url,
-                    #     "lot_title": lot_title,
-                    #     "lot_MSRP": lot_msrp,
-                    #     "lot_bid": lot_bid,
-                    #     "lot_condition": lot_condition,
-                    #     "lot_time_remaining": lot_time,
-                    #     "lot_url": lot_url
-                    # })
 
+                    # write results to file
                     with open("../result.csv", "a") as f:
                         writer = csv.writer(f)
                         writer.writerow([lot_title, str(lot_msrp)+"$", str(lot_bid)+"$", lot_condition, lot_time, lot_img_url, lot_url])
 
             except Exception:
                 logging.info(f"some error with item: {count}")
-
-        # save the data to JSON
-        # with open("result.json", "a") as f:
-        #     json.dump(result, f, indent=4, ensure_ascii=False)
 
     print(f"execution time was: {datetime.now()-start}")
 
